@@ -315,7 +315,7 @@
 
     .month-row {
       display: grid;
-      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1fr);
+      grid-template-columns: minmax(0, .8fr) minmax(0, 1fr) minmax(0, 1fr);
       gap: 6px;
       align-items: center;
       margin-bottom: 6px;
@@ -545,14 +545,15 @@
     </div>
   </div>
 
-  <!-- CARD 2: ANNUAL INCOME & TAX REFUND (12 THÁNG) -->
+  <!-- CARD 2: ANNUAL INCOME & TAX REFUND (12 THÁNG + GIẢM TRỪ GIA CẢNH NĂM) -->
   <div class="card">
     <div class="header">
       <div style="display:flex;align-items:center;justify-content:space-between;gap:6px;flex-wrap:wrap;">
         <div>
           <div class="title">Salary Tools TR – Quyết toán năm theo từng tháng</div>
           <div class="subtitle">
-            Nhập <b>thu nhập tính thuế</b> và <b>thuế TNCN đã khấu trừ</b> cho từng tháng trong năm (tối đa 12 tháng).
+            Nhập <b>lương gross</b> và <b>thuế TNCN đã khấu trừ</b> cho từng tháng trong năm. Công cụ sẽ tính thuế năm,
+            áp <b>giảm trừ bản thân + người phụ thuộc</b> rồi cho biết bạn được hoàn hay phải nộp thêm.
           </div>
         </div>
         <div class="badge">Annual by Month</div>
@@ -564,11 +565,38 @@
       <div>
         <div class="section-title">Thu nhập theo tháng</div>
         <div class="section-subnote">
-          • Thu nhập tính thuế mỗi tháng = thu nhập sau bảo hiểm, sau giảm trừ gia cảnh, trước thuế.<br/>
+          • Lương gross mỗi tháng: trước thuế, trước các khoản BH bắt buộc.<br/>
           • Nếu một tháng không có thu nhập, có thể để trống hoặc nhập 0.
         </div>
 
         <div id="monthContainer"></div>
+
+        <div class="section-title" style="margin-top:12px;">Giảm trừ gia cảnh cho cả năm</div>
+        <div class="section-subnote">
+          Dùng cùng mức giảm trừ bản thân / người phụ thuộc theo tháng ở trên, nhưng nhân số tháng thực tế trong năm.
+        </div>
+
+        <div class="inline-inputs">
+          <div class="form-group">
+            <span class="small-label">Số tháng được giảm trừ bản thân</span>
+            <input type="number" id="annualPersonalMonths" min="0" max="12" step="1" value="12" />
+          </div>
+          <div class="form-group">
+            <span class="small-label">Số người phụ thuộc bình quân trong năm</span>
+            <input type="number" id="annualDepCount" min="0" step="1" value="0" />
+          </div>
+        </div>
+
+        <div class="inline-inputs">
+          <div class="form-group">
+            <span class="small-label">Số tháng được tính cho mỗi người phụ thuộc</span>
+            <input type="number" id="annualDepMonths" min="0" max="12" step="1" value="12" />
+          </div>
+          <div class="form-group">
+            <span class="small-label">Ghi chú</span>
+            <input type="text" disabled value="Nếu người phụ thuộc không đủ 12 tháng, tự chỉnh nhỏ hơn." style="text-align:left;color:#6b7280;background:#f3f4f6;" />
+          </div>
+        </div>
 
         <div class="btn-row" style="margin-top:12px;">
           <button class="btn-primary" id="calcAnnualBtn" type="button">
@@ -587,8 +615,35 @@
         <div class="section-title">Kết quả quyết toán năm</div>
         <div class="summary-card">
           <div class="summary-row label">
-            <span>Tổng thu nhập tính thuế năm</span>
-            <span id="totalAnnualIncomeLabel">0 VND</span>
+            <span>Tổng lương gross năm</span>
+            <span id="totalAnnualGrossLabel">0 VND</span>
+          </div>
+
+          <div class="summary-row label">
+            <span>Tổng thu nhập sau BH & khấu trừ khác (trước GTGC)</span>
+            <span id="totalAnnualBeforeFamilyLabel">0 VND</span>
+          </div>
+
+          <div class="divider"></div>
+
+          <div class="summary-row label">
+            <span>Giảm trừ bản thân năm</span>
+            <span id="annualPersonalDedLabel">0 VND</span>
+          </div>
+          <div class="summary-row label">
+            <span>Giảm trừ người phụ thuộc năm</span>
+            <span id="annualDepDedLabel">0 VND</span>
+          </div>
+          <div class="summary-row label">
+            <span>Tổng giảm trừ gia cảnh năm</span>
+            <span id="annualFamilyDedTotalLabel">0 VND</span>
+          </div>
+
+          <div class="divider"></div>
+
+          <div class="summary-row label">
+            <span>Thu nhập tính thuế năm (sau GTGC)</span>
+            <span id="taxableAnnualIncomeLabel">0 VND</span>
           </div>
 
           <div class="summary-row label">
@@ -615,9 +670,10 @@
           </div>
 
           <div class="annual-note">
+            • Công cụ giả định cùng tỷ lệ BHXH/BHYT/BHTN và khấu trừ khác như phần Gross → Net bên trên.<br/>
             • Nếu số dương: bạn <b>đã nộp nhiều hơn</b> → có thể được hoàn thuế.<br/>
             • Nếu số âm: bạn <b>nộp chưa đủ</b> → cần nộp thêm khi quyết toán.<br/>
-            • Thuế năm được tính theo <b>biểu lũy tiến lũy kế trên tổng thu nhập tính thuế năm</b>
+            • Thuế năm được tính theo <b>biểu lũy tiến trên tổng thu nhập tính thuế năm</b>
               (ngưỡng bậc thuế = ngưỡng tháng × 12).
           </div>
         </div>
@@ -633,13 +689,11 @@
 
     function parseAccountingToNumber(str) {
       if (!str) return 0;
-      // Bỏ dấu chấm, phẩy, khoảng trắng, VND, và dấu ngoặc
       let clean = String(str)
         .replace(/[\sVNDvnd]/g, "")
         .replace(/\./g, "")
         .replace(/,/g, "");
 
-      // Xử lý số âm dạng (1000)
       let negative = false;
       if (clean.includes("(") && clean.includes(")")) {
         negative = true;
@@ -654,7 +708,7 @@
       return num;
     }
 
-    // Biểu thuế TNCN lũy tiến từng phần (VN truyền thống) - theo THÁNG
+    // Thuế TNCN theo THÁNG
     function calcPIT(taxableIncome) {
       if (taxableIncome <= 0) return 0;
 
@@ -683,7 +737,7 @@
       return tax;
     }
 
-    // Biểu thuế TNCN theo NĂM (ngưỡng = ngưỡng tháng × 12)
+    // Thuế TNCN theo NĂM (ngưỡng = ngưỡng tháng × 12)
     function calcPITAnnual(taxableAnnualIncome) {
       if (taxableAnnualIncome <= 0) return 0;
 
@@ -719,7 +773,6 @@
 
       const gross = parseAccountingToNumber(grossStr);
       let insBase = parseAccountingToNumber(insBaseStr);
-      // Nếu không nhập hoặc =0 thì dùng luôn Gross
       if (!insBase) {
         insBase = gross;
       }
@@ -744,31 +797,24 @@
         return;
       }
 
-      // 1. Khấu trừ bảo hiểm dựa trên lương bảo hiểm (insBase)
       const insRateTotal = siRate + hiRate + uiRate;
       const insDeduct = insBase * insRateTotal;
 
-      // 2. Khấu trừ khác dựa trên Gross
       const otherDeduct = gross * otherRate;
 
       const incomeBeforeFamily = gross - insDeduct - otherDeduct;
 
-      // 3. Giảm trừ gia cảnh
       const familyDeduct = personalDeduction + dependents * dependentDeduction;
 
-      // Thu nhập chịu thuế
       const taxableIncome = Math.max(0, incomeBeforeFamily - familyDeduct);
 
-      // 4. Thuế TNCN
       const pit = calcPIT(taxableIncome);
 
-      // 5. Net
       const net = gross - insDeduct - otherDeduct - pit;
 
       const totalDeduction =
         insDeduct + otherDeduct + pit + Math.max(0, Math.min(familyDeduct, incomeBeforeFamily));
 
-      // Cập nhật UI
       document.getElementById("grossLabel").textContent = formatVND(gross);
       document.getElementById("insBaseLabel").textContent = formatVND(insBase);
       document.getElementById("netLabel").textContent = formatVND(net);
@@ -822,18 +868,18 @@
         label.textContent = name;
         colLabel.appendChild(label);
 
-        const colIncome = document.createElement("div");
-        const incomeLabel = document.createElement("div");
-        incomeLabel.className = "month-label";
-        incomeLabel.textContent = "Thu nhập tính thuế (VND)";
-        const incomeInput = document.createElement("input");
-        incomeInput.type = "text";
-        incomeInput.className = "month-income";
-        incomeInput.placeholder = "Ví dụ: 15.000.000";
-        incomeInput.inputMode = "numeric";
-        attachAccountingFormatter(incomeInput);
-        colIncome.appendChild(incomeLabel);
-        colIncome.appendChild(incomeInput);
+        const colGross = document.createElement("div");
+        const grossLabel = document.createElement("div");
+        grossLabel.className = "month-label";
+        grossLabel.textContent = "Lương gross (VND)";
+        const grossInput = document.createElement("input");
+        grossInput.type = "text";
+        grossInput.className = "month-gross";
+        grossInput.placeholder = "VD: 25.000.000";
+        grossInput.inputMode = "numeric";
+        attachAccountingFormatter(grossInput);
+        colGross.appendChild(grossLabel);
+        colGross.appendChild(grossInput);
 
         const colTax = document.createElement("div");
         const taxLabel = document.createElement("div");
@@ -842,14 +888,14 @@
         const taxInput = document.createElement("input");
         taxInput.type = "text";
         taxInput.className = "month-taxpaid";
-        taxInput.placeholder = "Ví dụ: 750.000";
+        taxInput.placeholder = "VD: 750.000";
         taxInput.inputMode = "numeric";
         attachAccountingFormatter(taxInput);
         colTax.appendChild(taxLabel);
         colTax.appendChild(taxInput);
 
         row.appendChild(colLabel);
-        row.appendChild(colIncome);
+        row.appendChild(colGross);
         row.appendChild(colTax);
 
         container.appendChild(row);
@@ -862,30 +908,63 @@
       errorDiv.style.display = "none";
       errorDiv.textContent = "";
 
-      let totalIncome = 0;
+      const siRate = Number(document.getElementById("siRate").value || 0) / 100;
+      const hiRate = Number(document.getElementById("hiRate").value || 0) / 100;
+      const uiRate = Number(document.getElementById("uiRate").value || 0) / 100;
+      const otherRate = Number(document.getElementById("otherRate").value || 0) / 100;
+      const personalDeductionMonthly = Number(document.getElementById("personalDeduction").value || 0);
+      const dependentDeductionMonthly = Number(document.getElementById("dependentDeduction").value || 0);
+
+      const annualPersonalMonths = Number(document.getElementById("annualPersonalMonths").value || 0);
+      const annualDepCount = Number(document.getElementById("annualDepCount").value || 0);
+      const annualDepMonths = Number(document.getElementById("annualDepMonths").value || 0);
+
+      let totalGross = 0;
+      let totalBeforeFamily = 0;
       let totalTaxPaid = 0;
 
+      const insRateTotal = siRate + hiRate + uiRate;
+
       rows.forEach((row) => {
-        const incomeInput = row.querySelector(".month-income");
+        const grossInput = row.querySelector(".month-gross");
         const taxInput = row.querySelector(".month-taxpaid");
 
-        const income = parseAccountingToNumber(incomeInput.value);
+        const gross = parseAccountingToNumber(grossInput.value);
         const taxPaid = parseAccountingToNumber(taxInput.value);
 
-        totalIncome += income;
+        if (gross > 0) {
+          const insDed = gross * insRateTotal;
+          const otherDed = gross * otherRate;
+          const beforeFamily = gross - insDed - otherDed;
+
+          totalGross += gross;
+          totalBeforeFamily += beforeFamily;
+        }
+
         totalTaxPaid += taxPaid;
       });
 
-      if (totalIncome <= 0) {
-        errorDiv.textContent = "Tổng thu nhập tính thuế năm phải > 0 (nhập theo từng tháng).";
+      if (totalGross <= 0) {
+        errorDiv.textContent = "Tổng lương gross năm phải > 0 (nhập theo từng tháng).";
         errorDiv.style.display = "block";
         return;
       }
 
-      const taxDue = calcPITAnnual(totalIncome);
+      const annualPersonalDed = personalDeductionMonthly * annualPersonalMonths;
+      const annualDepDed = dependentDeductionMonthly * annualDepCount * annualDepMonths;
+      const familyDedTotal = annualPersonalDed + annualDepDed;
+
+      const taxableAnnualIncome = Math.max(0, totalBeforeFamily - familyDedTotal);
+
+      const taxDue = calcPITAnnual(taxableAnnualIncome);
       const diff = totalTaxPaid - taxDue;
 
-      document.getElementById("totalAnnualIncomeLabel").textContent = formatVND(totalIncome);
+      document.getElementById("totalAnnualGrossLabel").textContent = formatVND(totalGross);
+      document.getElementById("totalAnnualBeforeFamilyLabel").textContent = formatVND(totalBeforeFamily);
+      document.getElementById("annualPersonalDedLabel").textContent = formatVND(annualPersonalDed);
+      document.getElementById("annualDepDedLabel").textContent = formatVND(annualDepDed);
+      document.getElementById("annualFamilyDedTotalLabel").textContent = formatVND(familyDedTotal);
+      document.getElementById("taxableAnnualIncomeLabel").textContent = formatVND(taxableAnnualIncome);
       document.getElementById("annualTaxDueLabel").textContent = formatVND(taxDue);
       document.getElementById("annualTaxPaidLabel").textContent = formatVND(totalTaxPaid);
       document.getElementById("annualDiffLabel").textContent = formatVND(diff);
@@ -908,7 +987,12 @@
     function resetAnnualByMonth() {
       createMonthRows();
 
-      document.getElementById("totalAnnualIncomeLabel").textContent = "0 VND";
+      document.getElementById("totalAnnualGrossLabel").textContent = "0 VND";
+      document.getElementById("totalAnnualBeforeFamilyLabel").textContent = "0 VND";
+      document.getElementById("annualPersonalDedLabel").textContent = "0 VND";
+      document.getElementById("annualDepDedLabel").textContent = "0 VND";
+      document.getElementById("annualFamilyDedTotalLabel").textContent = "0 VND";
+      document.getElementById("taxableAnnualIncomeLabel").textContent = "0 VND";
       document.getElementById("annualTaxDueLabel").textContent = "0 VND";
       document.getElementById("annualTaxPaidLabel").textContent = "0 VND";
       document.getElementById("annualDiffLabel").textContent = "0 VND";
@@ -971,7 +1055,6 @@
         resetAnnualByMonth();
       });
 
-      // Khởi tạo 12 tháng cho quyết toán năm
       resetAnnualByMonth();
     });
   </script>
