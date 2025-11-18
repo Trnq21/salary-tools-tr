@@ -159,7 +159,8 @@
 
     .btn-primary,
     .btn-ghost,
-    .btn-soft {
+    .btn-soft,
+    .btn-danger {
       border-radius: 999px;
       font-size: 13px;
       padding: 7px 14px;
@@ -206,6 +207,17 @@
 
     .btn-soft:hover {
       background: #d1fae5;
+    }
+
+    .btn-danger {
+      background: #fee2e2;
+      color: #b91c1c;
+      padding-inline: 10px;
+      font-size: 11px;
+    }
+
+    .btn-danger:hover {
+      background: #fecaca;
     }
 
     .right-panel {
@@ -302,7 +314,7 @@
     /* Annual section specific */
     .annual-grid {
       display: grid;
-      grid-template-columns: minmax(0, 1.3fr) minmax(0, 0.9fr);
+      grid-template-columns: minmax(0, 1.2fr) minmax(0, 0.9fr);
       gap: 20px;
       margin-top: 4px;
     }
@@ -313,30 +325,49 @@
       }
     }
 
-    .month-row {
-      display: grid;
-      grid-template-columns: minmax(0, .7fr) minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1fr);
-      gap: 6px;
+    .period-block {
+      border-radius: 16px;
+      border: 1px solid #e5e7eb;
+      background: #f9fafb;
+      padding: 10px 12px 10px;
+      margin-bottom: 8px;
+    }
+
+    .period-header {
+      display: flex;
       align-items: center;
+      justify-content: space-between;
       margin-bottom: 6px;
+      gap: 4px;
+    }
+
+    .period-title {
+      font-size: 12px;
+      font-weight: 600;
+      color: #4b5563;
+    }
+
+    .period-note {
+      font-size: 11px;
+      color: #9ca3af;
+    }
+
+    .period-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 8px;
     }
 
     @media (max-width: 900px) {
-      .month-row {
-        grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+      .period-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
       }
     }
 
     @media (max-width: 700px) {
-      .month-row {
+      .period-grid {
         grid-template-columns: minmax(0, 1fr);
       }
-    }
-
-    .month-label {
-      font-size: 12px;
-      color: #6b7280;
-      margin-bottom: 2px;
     }
 
     .annual-summary-main {
@@ -551,34 +582,39 @@
     </div>
   </div>
 
-  <!-- CARD 2: ANNUAL INCOME & TAX REFUND (12 THÁNG + GIẢM TRỪ GIA CẢNH NĂM) -->
+  <!-- CARD 2: ANNUAL INCOME & TAX REFUND (THEO GIAI ĐOẠN x THÁNG) -->
   <div class="card">
     <div class="header">
       <div style="display:flex;align-items:center;justify-content:space-between;gap:6px;flex-wrap:wrap;">
         <div>
-          <div class="title">Salary Tools TR – Quyết toán năm theo từng tháng</div>
+          <div class="title">Salary Tools TR – Quyết toán năm theo giai đoạn (x tháng)</div>
           <div class="subtitle">
-            Nhập <b>lương gross</b>, <b>lương net thực nhận</b> và <b>thuế TNCN đã khấu trừ</b> cho từng tháng.
-            Công cụ sẽ tính thuế phải nộp năm, áp <b>giảm trừ bản thân + người phụ thuộc</b> và cho biết bạn được hoàn hay phải nộp thêm.
+            Tạo từng <b>giai đoạn lương</b> (ví dụ: 6 tháng đầu, 3 tháng tăng lương...), nhập Gross / Net / Thuế mỗi tháng
+            và số tháng áp dụng cho giai đoạn đó.
           </div>
         </div>
-        <div class="badge">Annual by Month (Gross & Net)</div>
+        <div class="badge">Annual by Period</div>
       </div>
     </div>
 
     <div class="annual-grid">
-      <!-- LEFT: MONTH INPUTS -->
+      <!-- LEFT: PERIOD INPUTS -->
       <div>
-        <div class="section-title">Thu nhập theo tháng</div>
+        <div class="section-title">Các giai đoạn trong năm</div>
         <div class="section-subnote">
-          • Lương gross mỗi tháng: trước thuế, trước các khoản BH bắt buộc.<br/>
-          • Lương net: số thực nhận sau khi trừ BH, thuế và các khấu trừ khác.<br/>
-          • Nếu một tháng không có thu nhập, có thể để trống hoặc nhập 0.
+          • Mỗi giai đoạn đại diện cho <b>mức lương lặp lại nhiều tháng</b> (vd: 01–06 có cùng lương → số tháng = 6).<br/>
+          • Bấm <b>“＋ Thêm giai đoạn”</b> để thêm block mới; số tháng có thể là x2, x3,...
         </div>
 
-        <div id="monthContainer"></div>
+        <div id="periodContainer"></div>
 
-        <div class="section-title" style="margin-top:12px;">Giảm trừ gia cảnh cho cả năm</div>
+        <div class="btn-row" style="margin-top:6px;">
+          <button class="btn-soft" id="addPeriodBtn" type="button">
+            ＋ Thêm giai đoạn
+          </button>
+        </div>
+
+        <div class="section-title" style="margin-top:14px;">Giảm trừ gia cảnh cho cả năm</div>
         <div class="section-subnote">
           Dùng cùng mức giảm trừ bản thân / người phụ thuộc theo tháng ở card trên, nhân với số tháng thực tế trong năm.
         </div>
@@ -610,7 +646,7 @@
             ▶ Tính quyết toán năm
           </button>
           <button class="btn-ghost" id="resetAnnualBtn" type="button">
-            ⟲ Xóa dữ liệu 12 tháng
+            ⟲ Xóa toàn bộ giai đoạn
           </button>
         </div>
 
@@ -621,10 +657,6 @@
       <div>
         <div class="section-title">Kết quả quyết toán năm</div>
         <div class="summary-card">
-          <div class="summary-row.label">
-            <span></span>
-            <span></span>
-          </div>
           <div class="summary-row label">
             <span>Tổng lương gross năm</span>
             <span id="totalAnnualGrossLabel">0 VND</span>
@@ -686,12 +718,10 @@
           </div>
 
           <div class="annual-note">
-            • Công cụ giả định cùng tỷ lệ BHXH/BHYT/BHTN và khấu trừ khác như phần Gross → Net bên trên (áp lên lương gross từng tháng).<br/>
-            • Lương net bạn nhập dùng để so sánh, tổng hợp thu nhập thực nhận; không dùng để tính thuế phải nộp năm.<br/>
-            • Nếu số dương: bạn <b>đã nộp nhiều hơn</b> → có thể được hoàn thuế.<br/>
-            • Nếu số âm: bạn <b>nộp chưa đủ</b> → cần nộp thêm khi quyết toán.<br/>
-            • Thuế năm được tính theo <b>biểu lũy tiến trên tổng thu nhập tính thuế năm</b>
-              (ngưỡng bậc thuế = ngưỡng tháng × 12).
+            • Mỗi giai đoạn đại diện cho một mức lương/thỏa thuận cố định trong một số tháng liên tiếp (x2, x3,...).<br/>
+            • Lương net bạn nhập dùng để tổng hợp, so sánh với bảng lương thực tế; không dùng để tính thuế phải nộp năm.<br/>
+            • Thu nhập tính thuế năm được tính từ gross trừ BH, khấu trừ khác và tổng giảm trừ gia cảnh năm.<br/>
+            • Nếu chênh lệch dương: bạn <b>đã nộp nhiều hơn</b> → có thể được hoàn thuế; nếu âm → cần nộp thêm.
           </div>
         </div>
       </div>
@@ -863,78 +893,147 @@
       });
     }
 
-    /* ---------------- ANNUAL (BY MONTH) CALC ---------------- */
-    function createMonthRows() {
-      const container = document.getElementById("monthContainer");
-      container.innerHTML = "";
+    /* ---------------- ANNUAL (BY PERIOD) CALC ---------------- */
+    let periodIndex = 0;
 
-      const monthNames = [
-        "Tháng 1", "Tháng 2", "Tháng 3", "Tháng 4",
-        "Tháng 5", "Tháng 6", "Tháng 7", "Tháng 8",
-        "Tháng 9", "Tháng 10", "Tháng 11", "Tháng 12"
-      ];
+    function createPeriodBlock() {
+      periodIndex += 1;
+      const container = document.getElementById("periodContainer");
 
-      monthNames.forEach((name, idx) => {
-        const row = document.createElement("div");
-        row.className = "month-row";
-        row.dataset.month = String(idx + 1);
+      const block = document.createElement("div");
+      block.className = "period-block";
+      block.dataset.index = String(periodIndex);
 
-        const colLabel = document.createElement("div");
-        const label = document.createElement("div");
-        label.className = "month-label";
-        label.textContent = name;
-        colLabel.appendChild(label);
+      const header = document.createElement("div");
+      header.className = "period-header";
 
-        const colGross = document.createElement("div");
-        const grossLabel = document.createElement("div");
-        grossLabel.className = "month-label";
-        grossLabel.textContent = "Lương gross (VND)";
-        const grossInput = document.createElement("input");
-        grossInput.type = "text";
-        grossInput.className = "month-gross";
-        grossInput.placeholder = "VD: 25.000.000";
-        grossInput.inputMode = "numeric";
-        attachAccountingFormatter(grossInput);
-        colGross.appendChild(grossLabel);
-        colGross.appendChild(grossInput);
+      const title = document.createElement("div");
+      title.className = "period-title";
+      title.textContent = "Giai đoạn " + periodIndex;
 
-        const colNet = document.createElement("div");
-        const netLabel = document.createElement("div");
-        netLabel.className = "month-label";
-        netLabel.textContent = "Lương net thực nhận (VND)";
-        const netInput = document.createElement("input");
-        netInput.type = "text";
-        netInput.className = "month-net";
-        netInput.placeholder = "VD: 19.500.000";
-        netInput.inputMode = "numeric";
-        attachAccountingFormatter(netInput);
-        colNet.appendChild(netLabel);
-        colNet.appendChild(netInput);
+      const rightWrap = document.createElement("div");
+      rightWrap.style.display = "flex";
+      rightWrap.style.alignItems = "center";
+      rightWrap.style.gap = "6px";
 
-        const colTax = document.createElement("div");
-        const taxLabel = document.createElement("div");
-        taxLabel.className = "month-label";
-        taxLabel.textContent = "Thuế TNCN đã khấu trừ (VND)";
-        const taxInput = document.createElement("input");
-        taxInput.type = "text";
-        taxInput.className = "month-taxpaid";
-        taxInput.placeholder = "VD: 750.000";
-        taxInput.inputMode = "numeric";
-        attachAccountingFormatter(taxInput);
-        colTax.appendChild(taxLabel);
-        colTax.appendChild(taxInput);
+      const note = document.createElement("span");
+      note.className = "period-note";
+      note.textContent = "Nhân với số tháng áp dụng (x2, x3,...)";
 
-        row.appendChild(colLabel);
-        row.appendChild(colGross);
-        row.appendChild(colNet);
-        row.appendChild(colTax);
+      const deleteBtn = document.createElement("button");
+      deleteBtn.type = "button";
+      deleteBtn.className = "btn-danger";
+      deleteBtn.textContent = "Xóa";
+      deleteBtn.addEventListener("click", function () {
+        const blocks = document.querySelectorAll(".period-block");
+        if (blocks.length <= 1) {
+          return;
+        }
+        block.remove();
+        renumberPeriods();
+      });
 
-        container.appendChild(row);
+      rightWrap.appendChild(note);
+      rightWrap.appendChild(deleteBtn);
+
+      header.appendChild(title);
+      header.appendChild(rightWrap);
+
+      const grid = document.createElement("div");
+      grid.className = "period-grid";
+
+      // Cột 1: Mô tả & số tháng
+      const col1 = document.createElement("div");
+      const descLabel = document.createElement("div");
+      descLabel.className = "small-label";
+      descLabel.textContent = "Mô tả / Ghi chú (VD: Tháng 1–3)";
+      const descInput = document.createElement("input");
+      descInput.type = "text";
+      descInput.className = "period-desc";
+      descInput.placeholder = "Không bắt buộc";
+      descInput.style.textAlign = "left";
+
+      const monthCountLabel = document.createElement("div");
+      monthCountLabel.className = "small-label";
+      monthCountLabel.style.marginTop = "6px";
+      monthCountLabel.textContent = "Số tháng áp dụng cho giai đoạn này";
+      const monthCountInput = document.createElement("input");
+      monthCountInput.type = "number";
+      monthCountInput.className = "period-months";
+      monthCountInput.min = "1";
+      monthCountInput.step = "1";
+      monthCountInput.value = "1";
+
+      col1.appendChild(descLabel);
+      col1.appendChild(descInput);
+      col1.appendChild(monthCountLabel);
+      col1.appendChild(monthCountInput);
+
+      // Cột 2: Gross & Net
+      const col2 = document.createElement("div");
+      const grossLabel = document.createElement("div");
+      grossLabel.className = "small-label";
+      grossLabel.textContent = "Lương gross / tháng (VND)";
+      const grossInput = document.createElement("input");
+      grossInput.type = "text";
+      grossInput.className = "period-gross";
+      grossInput.placeholder = "VD: 25.000.000";
+      grossInput.inputMode = "numeric";
+      attachAccountingFormatter(grossInput);
+
+      const netLabel = document.createElement("div");
+      netLabel.className = "small-label";
+      netLabel.style.marginTop = "6px";
+      netLabel.textContent = "Lương net thực nhận / tháng (VND)";
+      const netInput = document.createElement("input");
+      netInput.type = "text";
+      netInput.className = "period-net";
+      netInput.placeholder = "VD: 19.500.000";
+      netInput.inputMode = "numeric";
+      attachAccountingFormatter(netInput);
+
+      col2.appendChild(grossLabel);
+      col2.appendChild(grossInput);
+      col2.appendChild(netLabel);
+      col2.appendChild(netInput);
+
+      // Cột 3: Thuế TNCN
+      const col3 = document.createElement("div");
+      const taxLabel = document.createElement("div");
+      taxLabel.className = "small-label";
+      taxLabel.textContent = "Thuế TNCN đã khấu trừ / tháng (VND)";
+      const taxInput = document.createElement("input");
+      taxInput.type = "text";
+      taxInput.className = "period-taxpaid";
+      taxInput.placeholder = "VD: 750.000";
+      taxInput.inputMode = "numeric";
+      attachAccountingFormatter(taxInput);
+
+      col3.appendChild(taxLabel);
+      col3.appendChild(taxInput);
+
+      grid.appendChild(col1);
+      grid.appendChild(col2);
+      grid.appendChild(col3);
+
+      block.appendChild(header);
+      block.appendChild(grid);
+      container.appendChild(block);
+    }
+
+    function renumberPeriods() {
+      const blocks = document.querySelectorAll(".period-block");
+      let idx = 1;
+      blocks.forEach((b) => {
+        b.dataset.index = String(idx);
+        const title = b.querySelector(".period-title");
+        if (title) title.textContent = "Giai đoạn " + idx;
+        idx += 1;
       });
     }
 
-    function calculateAnnualByMonth() {
-      const rows = document.querySelectorAll(".month-row");
+    function calculateAnnualByPeriod() {
+      const blocks = document.querySelectorAll(".period-block");
       const errorDiv = document.getElementById("annualError");
       errorDiv.style.display = "none";
       errorDiv.textContent = "";
@@ -950,40 +1049,55 @@
       const annualDepCount = Number(document.getElementById("annualDepCount").value || 0);
       const annualDepMonths = Number(document.getElementById("annualDepMonths").value || 0);
 
+      const insRateTotal = siRate + hiRate + uiRate;
+
       let totalGross = 0;
       let totalNet = 0;
       let totalBeforeFamily = 0;
       let totalTaxPaid = 0;
+      let totalMonths = 0;
 
-      const insRateTotal = siRate + hiRate + uiRate;
-
-      rows.forEach((row) => {
-        const grossInput = row.querySelector(".month-gross");
-        const netInput = row.querySelector(".month-net");
-        const taxInput = row.querySelector(".month-taxpaid");
+      blocks.forEach((block) => {
+        const grossInput = block.querySelector(".period-gross");
+        const netInput = block.querySelector(".period-net");
+        const taxInput = block.querySelector(".period-taxpaid");
+        const monthInput = block.querySelector(".period-months");
 
         const gross = parseAccountingToNumber(grossInput.value);
         const net = parseAccountingToNumber(netInput.value);
         const taxPaid = parseAccountingToNumber(taxInput.value);
+        const months = Number(monthInput.value || 0);
+
+        if (months <= 0) return;
 
         if (gross > 0) {
           const insDed = gross * insRateTotal;
           const otherDed = gross * otherRate;
           const beforeFamily = gross - insDed - otherDed;
 
-          totalGross += gross;
-          totalBeforeFamily += beforeFamily;
+          totalGross += gross * months;
+          totalBeforeFamily += beforeFamily * months;
         }
 
         if (net > 0) {
-          totalNet += net;
+          totalNet += net * months;
         }
 
-        totalTaxPaid += taxPaid;
+        if (taxPaid > 0) {
+          totalTaxPaid += taxPaid * months;
+        }
+
+        totalMonths += months;
       });
 
       if (totalGross <= 0) {
-        errorDiv.textContent = "Tổng lương gross năm phải > 0 (nhập theo từng tháng).";
+        errorDiv.textContent = "Tổng lương gross năm phải > 0. Vui lòng nhập ít nhất một giai đoạn có lương gross và số tháng hợp lệ.";
+        errorDiv.style.display = "block";
+        return;
+      }
+
+      if (totalMonths > 12) {
+        errorDiv.textContent = "Tổng số tháng từ các giai đoạn đang lớn hơn 12. Hãy kiểm tra lại số tháng x2, x3,...";
         errorDiv.style.display = "block";
         return;
       }
@@ -1023,8 +1137,11 @@
       }
     }
 
-    function resetAnnualByMonth() {
-      createMonthRows();
+    function resetAnnualByPeriod() {
+      const container = document.getElementById("periodContainer");
+      container.innerHTML = "";
+      periodIndex = 0;
+      createPeriodBlock();
 
       document.getElementById("totalAnnualGrossLabel").textContent = "0 VND";
       document.getElementById("totalAnnualNetLabel").textContent = "0 VND";
@@ -1088,14 +1205,19 @@
       });
 
       document.getElementById("calcAnnualBtn").addEventListener("click", function () {
-        calculateAnnualByMonth();
+        calculateAnnualByPeriod();
       });
 
       document.getElementById("resetAnnualBtn").addEventListener("click", function () {
-        resetAnnualByMonth();
+        resetAnnualByPeriod();
       });
 
-      resetAnnualByMonth();
+      document.getElementById("addPeriodBtn").addEventListener("click", function () {
+        createPeriodBlock();
+      });
+
+      // Khởi tạo 1 giai đoạn mặc định
+      resetAnnualByPeriod();
     });
   </script>
 </body>
