@@ -315,10 +315,16 @@
 
     .month-row {
       display: grid;
-      grid-template-columns: minmax(0, .8fr) minmax(0, 1fr) minmax(0, 1fr);
+      grid-template-columns: minmax(0, .7fr) minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1fr);
       gap: 6px;
       align-items: center;
       margin-bottom: 6px;
+    }
+
+    @media (max-width: 900px) {
+      .month-row {
+        grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+      }
     }
 
     @media (max-width: 700px) {
@@ -552,11 +558,11 @@
         <div>
           <div class="title">Salary Tools TR – Quyết toán năm theo từng tháng</div>
           <div class="subtitle">
-            Nhập <b>lương gross</b> và <b>thuế TNCN đã khấu trừ</b> cho từng tháng trong năm. Công cụ sẽ tính thuế năm,
-            áp <b>giảm trừ bản thân + người phụ thuộc</b> rồi cho biết bạn được hoàn hay phải nộp thêm.
+            Nhập <b>lương gross</b>, <b>lương net thực nhận</b> và <b>thuế TNCN đã khấu trừ</b> cho từng tháng.
+            Công cụ sẽ tính thuế phải nộp năm, áp <b>giảm trừ bản thân + người phụ thuộc</b> và cho biết bạn được hoàn hay phải nộp thêm.
           </div>
         </div>
-        <div class="badge">Annual by Month</div>
+        <div class="badge">Annual by Month (Gross & Net)</div>
       </div>
     </div>
 
@@ -566,6 +572,7 @@
         <div class="section-title">Thu nhập theo tháng</div>
         <div class="section-subnote">
           • Lương gross mỗi tháng: trước thuế, trước các khoản BH bắt buộc.<br/>
+          • Lương net: số thực nhận sau khi trừ BH, thuế và các khấu trừ khác.<br/>
           • Nếu một tháng không có thu nhập, có thể để trống hoặc nhập 0.
         </div>
 
@@ -573,7 +580,7 @@
 
         <div class="section-title" style="margin-top:12px;">Giảm trừ gia cảnh cho cả năm</div>
         <div class="section-subnote">
-          Dùng cùng mức giảm trừ bản thân / người phụ thuộc theo tháng ở trên, nhưng nhân số tháng thực tế trong năm.
+          Dùng cùng mức giảm trừ bản thân / người phụ thuộc theo tháng ở card trên, nhân với số tháng thực tế trong năm.
         </div>
 
         <div class="inline-inputs">
@@ -614,9 +621,18 @@
       <div>
         <div class="section-title">Kết quả quyết toán năm</div>
         <div class="summary-card">
+          <div class="summary-row.label">
+            <span></span>
+            <span></span>
+          </div>
           <div class="summary-row label">
             <span>Tổng lương gross năm</span>
             <span id="totalAnnualGrossLabel">0 VND</span>
+          </div>
+
+          <div class="summary-row label">
+            <span>Tổng lương net năm (nhập)</span>
+            <span id="totalAnnualNetLabel">0 VND</span>
           </div>
 
           <div class="summary-row label">
@@ -670,7 +686,8 @@
           </div>
 
           <div class="annual-note">
-            • Công cụ giả định cùng tỷ lệ BHXH/BHYT/BHTN và khấu trừ khác như phần Gross → Net bên trên.<br/>
+            • Công cụ giả định cùng tỷ lệ BHXH/BHYT/BHTN và khấu trừ khác như phần Gross → Net bên trên (áp lên lương gross từng tháng).<br/>
+            • Lương net bạn nhập dùng để so sánh, tổng hợp thu nhập thực nhận; không dùng để tính thuế phải nộp năm.<br/>
             • Nếu số dương: bạn <b>đã nộp nhiều hơn</b> → có thể được hoàn thuế.<br/>
             • Nếu số âm: bạn <b>nộp chưa đủ</b> → cần nộp thêm khi quyết toán.<br/>
             • Thuế năm được tính theo <b>biểu lũy tiến trên tổng thu nhập tính thuế năm</b>
@@ -881,6 +898,19 @@
         colGross.appendChild(grossLabel);
         colGross.appendChild(grossInput);
 
+        const colNet = document.createElement("div");
+        const netLabel = document.createElement("div");
+        netLabel.className = "month-label";
+        netLabel.textContent = "Lương net thực nhận (VND)";
+        const netInput = document.createElement("input");
+        netInput.type = "text";
+        netInput.className = "month-net";
+        netInput.placeholder = "VD: 19.500.000";
+        netInput.inputMode = "numeric";
+        attachAccountingFormatter(netInput);
+        colNet.appendChild(netLabel);
+        colNet.appendChild(netInput);
+
         const colTax = document.createElement("div");
         const taxLabel = document.createElement("div");
         taxLabel.className = "month-label";
@@ -896,6 +926,7 @@
 
         row.appendChild(colLabel);
         row.appendChild(colGross);
+        row.appendChild(colNet);
         row.appendChild(colTax);
 
         container.appendChild(row);
@@ -920,6 +951,7 @@
       const annualDepMonths = Number(document.getElementById("annualDepMonths").value || 0);
 
       let totalGross = 0;
+      let totalNet = 0;
       let totalBeforeFamily = 0;
       let totalTaxPaid = 0;
 
@@ -927,9 +959,11 @@
 
       rows.forEach((row) => {
         const grossInput = row.querySelector(".month-gross");
+        const netInput = row.querySelector(".month-net");
         const taxInput = row.querySelector(".month-taxpaid");
 
         const gross = parseAccountingToNumber(grossInput.value);
+        const net = parseAccountingToNumber(netInput.value);
         const taxPaid = parseAccountingToNumber(taxInput.value);
 
         if (gross > 0) {
@@ -939,6 +973,10 @@
 
           totalGross += gross;
           totalBeforeFamily += beforeFamily;
+        }
+
+        if (net > 0) {
+          totalNet += net;
         }
 
         totalTaxPaid += taxPaid;
@@ -960,6 +998,7 @@
       const diff = totalTaxPaid - taxDue;
 
       document.getElementById("totalAnnualGrossLabel").textContent = formatVND(totalGross);
+      document.getElementById("totalAnnualNetLabel").textContent = formatVND(totalNet);
       document.getElementById("totalAnnualBeforeFamilyLabel").textContent = formatVND(totalBeforeFamily);
       document.getElementById("annualPersonalDedLabel").textContent = formatVND(annualPersonalDed);
       document.getElementById("annualDepDedLabel").textContent = formatVND(annualDepDed);
@@ -988,6 +1027,7 @@
       createMonthRows();
 
       document.getElementById("totalAnnualGrossLabel").textContent = "0 VND";
+      document.getElementById("totalAnnualNetLabel").textContent = "0 VND";
       document.getElementById("totalAnnualBeforeFamilyLabel").textContent = "0 VND";
       document.getElementById("annualPersonalDedLabel").textContent = "0 VND";
       document.getElementById("annualDepDedLabel").textContent = "0 VND";
